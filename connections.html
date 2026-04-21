@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Connections · For You</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4ede4;
+    --ink: #1a1612;
+    --accent: #c94f3a;
+    --yellow: #e8c547;
+    --green: #7ba05b;
+    --blue: #5b8fa0;
+    --purple: #9b7bb8;
+    --tile: #ffffff;
+    --tile-selected: #1a1612;
+    --tile-selected-ink: #f4ede4;
+    --border: #1a1612;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Fraunces', Georgia, serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(rgba(26,22,18,0.06) 1px, transparent 1px);
+    background-size: 16px 16px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .wrap {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 32px 20px 80px;
+    position: relative;
+    z-index: 1;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 28px;
+    position: relative;
+  }
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: clamp(42px, 10vw, 64px);
+    line-height: 0.9;
+    letter-spacing: -0.03em;
+    font-style: italic;
+  }
+  h1 em {
+    font-weight: 700;
+    font-style: normal;
+    color: var(--accent);
+  }
+  .sub {
+    margin-top: 14px;
+    font-size: 14px;
+    color: rgba(26,22,18,0.65);
+    font-style: italic;
+  }
+  .mistakes {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin: 24px 0 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(26,22,18,0.55);
+  }
+  .dots { display: flex; gap: 8px; }
+  .dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--ink);
+    transition: all 0.4s ease;
+  }
+  .dot.lost {
+    background: transparent;
+    border: 1.5px solid rgba(26,22,18,0.25);
+    transform: scale(0.7);
+  }
+  .solved-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .solved {
+    padding: 16px 18px;
+    border-radius: 6px;
+    text-align: center;
+    animation: solveIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border: 1.5px solid var(--ink);
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+  .solved.yellow { background: var(--yellow); }
+  .solved.green  { background: var(--green); color: #fff; }
+  .solved.blue   { background: var(--blue); color: #fff; }
+  .solved.purple { background: var(--purple); color: #fff; }
+  .solved-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .solved-words {
+    font-family: 'Fraunces', serif;
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+  @keyframes solveIn {
+    0%   { opacity: 0; transform: translateY(-10px) scale(0.95); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+  .tile {
+    aspect-ratio: 1;
+    background: var(--tile);
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    text-transform: uppercase;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    text-align: center;
+    transition: all 0.15s ease;
+    letter-spacing: 0.05em;
+    font-size: clamp(8px, 2.4vw, 13px);
+    word-break: break-word;
+    line-height: 1.1;
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  .tile:hover:not(.selected):not(.locked) {
+    transform: translate(-1px, -1px);
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+  .tile:active:not(.locked) {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 var(--ink);
+  }
+  .tile.selected {
+    background: var(--tile-selected);
+    color: var(--tile-selected-ink);
+    transform: translate(-1px, -1px);
+    box-shadow: 4px 4px 0 var(--accent);
+  }
+  .tile.shake { animation: shake 0.45s; }
+  .tile.bounce { animation: bounce 0.4s; }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  .controls {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  button.btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 12px 18px;
+    background: var(--bg);
+    color: var(--ink);
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.15s ease;
+  }
+  button.btn:hover:not(:disabled) {
+    background: var(--ink);
+    color: var(--bg);
+  }
+  button.btn.primary {
+    background: var(--ink);
+    color: var(--bg);
+  }
+  button.btn.primary:hover:not(:disabled) {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  button.btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  .toast {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-80px);
+    background: var(--ink);
+    color: var(--bg);
+    padding: 12px 22px;
+    border-radius: 999px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 100;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .win {
+    text-align: center;
+    padding: 40px 20px 10px;
+    animation: winIn 0.7s ease;
+  }
+  .win-title {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 300;
+    font-size: clamp(34px, 8vw, 52px);
+    line-height: 1;
+    margin-bottom: 12px;
+  }
+  .win-title em {
+    font-style: normal;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .win-msg {
+    font-family: 'Fraunces', serif;
+    font-size: 16px;
+    color: rgba(26,22,18,0.75);
+    max-width: 420px;
+    margin: 0 auto;
+    line-height: 1.5;
+  }
+  @keyframes winIn {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  .hidden { display: none !important; }
+  .corner {
+    position: absolute;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: rgba(26,22,18,0.4);
+    text-transform: uppercase;
+  }
+  .corner.tl { top: 12px; left: 20px; }
+  .corner.tr { top: 12px; right: 20px; }
+  footer {
+    margin-top: 36px;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: rgba(26,22,18,0.4);
+  }
+  footer .heart { color: var(--accent); font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="corner tl">№ 001</div>
+  <div class="corner tr">Edition of 1</div>
+
+  <header>
+    <h1>Ben-<em>ections</em></h1>
+    <div class="sub">Create four groups of four.</div>
+  </header>
+
+  <div class="mistakes">
+    <span>Mistakes remaining</span>
+    <div class="dots" id="dots">
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    </div>
+  </div>
+
+  <div class="solved-groups" id="solved"></div>
+  <div class="grid" id="grid"></div>
+
+  <div class="controls" id="controls">
+    <button class="btn" id="shuffleBtn">Shuffle</button>
+    <button class="btn" id="deselectBtn">Deselect all</button>
+    <button class="btn primary" id="submitBtn" disabled>Submit</button>
+  </div>
+
+  <div class="win hidden" id="win">
+    <div class="win-title">All <em>connected.</em></div>
+  </div>
+
+  <footer>Made with <span class="heart">♥</span></footer>
+</div>
+
+<div class="toast" id="toast">One away…</div>
+
+<script>
+const GROUPS = [
+  { name: "Shows we've watched",  color: "yellow", words: ["BELFAST", "MOMTOK", "LOVE ON THE SPECTRUM", "MANOSPHERE"] },
+  { name: "Things you hate",      color: "green",  words: ["BLOOD", "FOOD", "HIGH FIVES", "GARLIC"] },
+  { name: "Your aesthetic",       color: "blue",   words: ["CHAIN", "TOMMY", "TASH", "VANS"] },
+  { name: "Things on our list",   color: "purple", words: ["SMALL BITES", "BRANCA", "3 WINES", "HAMILTON"] },
+];
+
+let allWords = [];
+let selected = new Set();
+let solved = [];
+let mistakes = 4;
+let locked = false;
+
+const gridEl = document.getElementById('grid');
+const solvedEl = document.getElementById('solved');
+const submitBtn = document.getElementById('submitBtn');
+const shuffleBtn = document.getElementById('shuffleBtn');
+const deselectBtn = document.getElementById('deselectBtn');
+const dotsEl = document.getElementById('dots');
+const toastEl = document.getElementById('toast');
+const winEl = document.getElementById('win');
+const controlsEl = document.getElementById('controls');
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function init() {
+  allWords = shuffle(GROUPS.flatMap(g => g.words.map(w => ({ word: w, group: g.name }))));
+  render();
+}
+
+function render() {
+  gridEl.innerHTML = '';
+  allWords.forEach(({ word }) => {
+    const el = document.createElement('div');
+    el.className = 'tile';
+    el.textContent = word;
+    el.dataset.word = word;
+    if (selected.has(word)) el.classList.add('selected');
+    el.addEventListener('click', () => toggle(word));
+    gridEl.appendChild(el);
+  });
+  submitBtn.disabled = selected.size !== 4 || locked;
+}
+
+function toggle(word) {
+  if (locked) return;
+  if (selected.has(word)) {
+    selected.delete(word);
+  } else {
+    if (selected.size >= 4) return;
+    selected.add(word);
+  }
+  render();
+}
+
+function showToast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => toastEl.classList.remove('show'), 1600);
+}
+
+function updateDots() {
+  const dots = dotsEl.querySelectorAll('.dot');
+  dots.forEach((d, i) => {
+    if (i >= mistakes) d.classList.add('lost');
+    else d.classList.remove('lost');
+  });
+}
+
+async function submit() {
+  if (selected.size !== 4 || locked) return;
+  locked = true;
+
+  const picked = [...selected];
+  const groupCounts = {};
+  GROUPS.forEach(g => {
+    groupCounts[g.name] = picked.filter(w => g.words.includes(w)).length;
+  });
+  const maxCount = Math.max(...Object.values(groupCounts));
+  const matchedGroup = GROUPS.find(g => groupCounts[g.name] === 4);
+
+  const tiles = [...gridEl.querySelectorAll('.tile')].filter(t => picked.includes(t.dataset.word));
+
+  if (matchedGroup) {
+    tiles.forEach((t, i) => {
+      t.style.animationDelay = (i * 80) + 'ms';
+      t.classList.add('bounce');
+    });
+    await wait(600);
+    solveGroup(matchedGroup);
+    selected.clear();
+    render();
+    locked = false;
+    if (solved.length === 4) winGame();
+  } else {
+    tiles.forEach((t, i) => {
+      t.style.animationDelay = (i * 60) + 'ms';
+      t.classList.add('shake');
+    });
+    await wait(500);
+    tiles.forEach(t => { t.classList.remove('shake'); t.style.animationDelay = ''; });
+    mistakes--;
+    updateDots();
+    if (maxCount === 3) showToast('One away…');
+    else showToast('Not quite.');
+    if (mistakes <= 0) {
+      await wait(400);
+      revealAll();
+    } else {
+      locked = false;
+    }
+  }
+}
+
+function solveGroup(group) {
+  solved.push(group.name);
+  allWords = allWords.filter(w => !group.words.includes(w.word));
+  const row = document.createElement('div');
+  row.className = 'solved ' + group.color;
+  row.innerHTML = `
+    <div class="solved-title">${group.name}</div>
+    <div class="solved-words">${group.words.join(' · ')}</div>
+  `;
+  solvedEl.appendChild(row);
+}
+
+function revealAll() {
+  const remaining = GROUPS.filter(g => !solved.includes(g.name));
+  let i = 0;
+  const tick = () => {
+    if (i >= remaining.length) {
+      showLossMsg();
+      return;
+    }
+    solveGroup(remaining[i]);
+    allWords = allWords.filter(w => !remaining[i].words.includes(w.word));
+    render();
+    i++;
+    setTimeout(tick, 450);
+  };
+  tick();
+}
+
+function showLossMsg() {
+  controlsEl.classList.add('hidden');
+  winEl.classList.remove('hidden');
+  winEl.querySelector('.win-title').innerHTML = 'Still <em>connected.</em>';
+}
+
+function winGame() {
+  controlsEl.classList.add('hidden');
+  winEl.classList.remove('hidden');
+}
+
+function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+shuffleBtn.addEventListener('click', () => { if (!locked) { allWords = shuffle(allWords); render(); }});
+deselectBtn.addEventListener('click', () => { if (!locked) { selected.clear(); render(); }});
+submitBtn.addEventListener('click', submit);
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Happy Birthday, Ben</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4ede4;
+    --ink: #1a1612;
+    --accent: #c94f3a;
+    --yellow: #e8c547;
+    --green: #7ba05b;
+    --blue: #5b8fa0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Fraunces', Georgia, serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(rgba(26,22,18,0.06) 1px, transparent 1px);
+    background-size: 16px 16px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .wrap {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 48px 20px 60px;
+    position: relative;
+    z-index: 1;
+  }
+  .corner {
+    position: absolute;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: rgba(26,22,18,0.4);
+    text-transform: uppercase;
+  }
+  .corner.tl { top: 14px; left: 20px; }
+  .corner.tr { top: 14px; right: 20px; }
+
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-align: center;
+    margin-bottom: 16px;
+    font-weight: 500;
+  }
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-style: italic;
+    font-size: clamp(52px, 14vw, 84px);
+    line-height: 0.88;
+    letter-spacing: -0.03em;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  h1 em {
+    font-weight: 700;
+    font-style: normal;
+    color: var(--accent);
+  }
+  .intro {
+    font-family: 'Fraunces', serif;
+    font-size: 17px;
+    line-height: 1.5;
+    text-align: center;
+    color: rgba(26,22,18,0.75);
+    font-style: italic;
+    margin: 0 auto 40px;
+    max-width: 400px;
+  }
+
+  .games {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 40px;
+  }
+  .game-card {
+    display: block;
+    padding: 24px 22px;
+    background: #fff;
+    border: 1.5px solid var(--ink);
+    border-radius: 6px;
+    text-decoration: none;
+    color: var(--ink);
+    box-shadow: 4px 4px 0 var(--ink);
+    transition: all 0.15s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .game-card:hover, .game-card:active {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 var(--ink);
+  }
+  .game-card:active {
+    transform: translate(1px, 1px);
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+  .game-card .num {
+    position: absolute;
+    top: 14px;
+    right: 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: rgba(26,22,18,0.35);
+  }
+  .game-name {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 300;
+    font-size: 38px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    margin-bottom: 6px;
+  }
+  .game-name em {
+    font-style: normal;
+    font-weight: 700;
+  }
+  .game-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: rgba(26,22,18,0.55);
+    margin-bottom: 4px;
+  }
+  .game-desc {
+    font-family: 'Fraunces', serif;
+    font-size: 14px;
+    color: rgba(26,22,18,0.65);
+    font-style: italic;
+    margin-top: 10px;
+  }
+
+  .card-1 .game-name em { color: var(--yellow); -webkit-text-stroke: 1px var(--ink); }
+  .card-2 .game-name em { color: var(--green); -webkit-text-stroke: 1px var(--ink); }
+  .card-3 .game-name em { color: var(--accent); }
+
+  .closing {
+    text-align: center;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 15px;
+    color: rgba(26,22,18,0.6);
+    line-height: 1.5;
+    margin-top: 20px;
+  }
+  .closing .sign {
+    display: block;
+    margin-top: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-style: normal;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  footer {
+    margin-top: 40px;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: rgba(26,22,18,0.4);
+  }
+  footer .heart { color: var(--accent); font-size: 12px; }
+
+  /* Stagger animation on load */
+  .game-card {
+    animation: slideIn 0.6s ease backwards;
+  }
+  .card-1 { animation-delay: 0.1s; }
+  .card-2 { animation-delay: 0.25s; }
+  .card-3 { animation-delay: 0.4s; }
+  @keyframes slideIn {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  h1, .intro, .eyebrow {
+    animation: fadeIn 0.8s ease backwards;
+  }
+  .eyebrow { animation-delay: 0s; }
+  h1 { animation-delay: 0.1s; }
+  .intro { animation-delay: 0.25s; }
+  @keyframes fadeIn {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="corner tl">Edition of 1</div>
+  <div class="corner tr">For Ben</div>
+
+  <div class="eyebrow">A gift in three parts</div>
+  <h1>Happy <em>Birthday</em>.</h1>
+  <p class="intro">Three little games, just for you. Play them in any order. One of them has a secret.</p>
+
+  <div class="games">
+    <a href="connections.html" class="game-card card-1">
+      <div class="num">01</div>
+      <div class="game-sub">Today's categories</div>
+      <div class="game-name">Ben-<em>ections</em></div>
+      <div class="game-desc">Create four groups of four.</div>
+    </a>
+
+    <a href="strands.html" class="game-card card-2">
+      <div class="num">02</div>
+      <div class="game-sub">Theme: Year in review</div>
+      <div class="game-name">Ben's <em>Strands</em></div>
+      <div class="game-desc">Find the theme words and the spangram.</div>
+    </a>
+
+    <a href="wordle.html" class="game-card card-3">
+      <div class="num">03</div>
+      <div class="game-sub">Guess your gift</div>
+      <div class="game-name">Gift-<em>le</em></div>
+      <div class="game-desc">Four letters. Six tries. A little something.</div>
+    </a>
+  </div>
+
+  <p class="closing">
+    Love you.
+    <span class="sign">♥</span>
+  </p>
+
+  <footer>Made with <span class="heart">♥</span></footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Gift-le · Guess Your Gift</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4ede4;
+    --ink: #1a1612;
+    --accent: #c94f3a;
+    --correct: #7ba05b;
+    --present: #e8c547;
+    --absent: #9a9690;
+    --tile: #ffffff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Fraunces', Georgia, serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(rgba(26,22,18,0.06) 1px, transparent 1px);
+    background-size: 16px 16px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .wrap {
+    max-width: 440px;
+    margin: 0 auto;
+    padding: 28px 18px 60px;
+    position: relative;
+    z-index: 1;
+  }
+  .corner {
+    position: absolute;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: rgba(26,22,18,0.4);
+    text-transform: uppercase;
+  }
+  .corner.tl { top: 12px; left: 18px; }
+  .corner.tr { top: 12px; right: 18px; }
+
+  header {
+    text-align: center;
+    margin-bottom: 18px;
+  }
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-style: italic;
+    font-size: clamp(48px, 13vw, 72px);
+    line-height: 0.9;
+    letter-spacing: -0.03em;
+  }
+  h1 em {
+    font-weight: 700;
+    font-style: normal;
+    color: var(--accent);
+  }
+  .tagline {
+    margin-top: 14px;
+    padding: 13px 18px;
+    background: var(--ink);
+    color: var(--bg);
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    text-align: center;
+    font-weight: 500;
+    box-shadow: 3px 3px 0 var(--accent);
+  }
+
+  .board {
+    display: grid;
+    grid-template-rows: repeat(6, 1fr);
+    gap: 6px;
+    margin: 24px auto 18px;
+    max-width: 300px;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+  .tile {
+    aspect-ratio: 1;
+    background: var(--tile);
+    border: 1.5px solid var(--ink);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: clamp(26px, 9vw, 36px);
+    text-transform: uppercase;
+    transition: transform 0.15s ease;
+    position: relative;
+  }
+  .tile.filled {
+    border-color: var(--ink);
+    animation: popIn 0.15s ease;
+  }
+  @keyframes popIn {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.08); }
+    100% { transform: scale(1); }
+  }
+  .tile.flip {
+    animation: flip 0.6s ease forwards;
+  }
+  @keyframes flip {
+    0%   { transform: rotateX(0); }
+    50%  { transform: rotateX(90deg); }
+    100% { transform: rotateX(0); }
+  }
+  .tile.correct {
+    background: var(--correct);
+    border-color: var(--correct);
+    color: #fff;
+  }
+  .tile.present {
+    background: var(--present);
+    border-color: var(--present);
+    color: var(--ink);
+  }
+  .tile.absent {
+    background: var(--absent);
+    border-color: var(--absent);
+    color: #fff;
+  }
+  .tile.shake { animation: shake 0.45s; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+  }
+  .tile.bounce { animation: bounce 0.5s; }
+  @keyframes bounce {
+    0%,100% { transform: translateY(0); }
+    40% { transform: translateY(-12px); }
+    70% { transform: translateY(-4px); }
+  }
+
+  .keyboard {
+    margin-top: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .kb-row {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+  }
+  .key {
+    flex: 1;
+    min-width: 0;
+    max-width: 38px;
+    height: 48px;
+    border: 1.5px solid var(--ink);
+    border-radius: 4px;
+    background: var(--tile);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 14px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.1s ease;
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+  .key:hover:not(:disabled) { transform: translate(-1px,-1px); box-shadow: 3px 3px 0 var(--ink); }
+  .key:active:not(:disabled) { transform: translate(1px,1px); box-shadow: 1px 1px 0 var(--ink); }
+  .key.wide {
+    max-width: 68px;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+  }
+  .key.correct { background: var(--correct); border-color: var(--correct); color: #fff; }
+  .key.present { background: var(--present); border-color: var(--present); color: var(--ink); }
+  .key.absent  { background: var(--absent);  border-color: var(--absent);  color: #fff; }
+
+  .toast {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-80px);
+    background: var(--ink);
+    color: var(--bg);
+    padding: 11px 20px;
+    border-radius: 999px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    z-index: 100;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  .win-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(26,22,18,0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    animation: fadeIn 0.4s ease;
+    padding: 20px;
+  }
+  .win-overlay.hidden { display: none; }
+  @keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  .win-modal {
+    background: var(--bg);
+    border: 1.5px solid var(--ink);
+    border-radius: 8px;
+    padding: 40px 32px 28px;
+    text-align: center;
+    max-width: 380px;
+    width: 100%;
+    box-shadow: 6px 6px 0 var(--accent);
+    animation: popInModal 0.6s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes popInModal {
+    0% { opacity: 0; transform: scale(0.7) translateY(20px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .reveal-emoji {
+    font-size: 56px;
+    line-height: 1;
+    margin-bottom: 14px;
+    animation: wiggle 1.2s ease-in-out infinite;
+  }
+  @keyframes wiggle {
+    0%,100% { transform: rotate(-6deg); }
+    50% { transform: rotate(6deg); }
+  }
+  .win-title {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 300;
+    font-size: clamp(30px, 7vw, 42px);
+    line-height: 1;
+    margin-bottom: 12px;
+  }
+  .win-title em { font-style: normal; font-weight: 700; color: var(--accent); }
+  .reveal-word {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    letter-spacing: 0.5em;
+    font-size: 26px;
+    padding: 12px 0 12px 8px;
+    margin: 14px auto;
+    background: var(--correct);
+    color: #fff;
+    border-radius: 4px;
+    max-width: 200px;
+  }
+  .win-msg {
+    font-family: 'Fraunces', serif;
+    font-size: 17px;
+    color: rgba(26,22,18,0.85);
+    font-style: italic;
+    line-height: 1.4;
+    margin-bottom: 8px;
+  }
+  .win-gift {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed rgba(26,22,18,0.2);
+    font-weight: 700;
+  }
+  .win-close {
+    margin-top: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 11px 22px;
+    background: var(--ink);
+    color: var(--bg);
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.15s ease;
+  }
+  .win-close:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .confetti-piece {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    pointer-events: none;
+    z-index: 150;
+    animation: confettiFall linear forwards;
+  }
+  @keyframes confettiFall {
+    0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0.3; }
+  }
+
+  footer {
+    margin-top: 28px;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: rgba(26,22,18,0.4);
+  }
+  footer .heart { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="corner tl">№ 003</div>
+  <div class="corner tr">Edition of 1</div>
+
+  <header>
+    <h1>Gift-<em>le</em></h1>
+    <div class="tagline">Guess your gift</div>
+  </header>
+
+  <div class="board" id="board"></div>
+
+  <div class="keyboard" id="keyboard"></div>
+
+  <div class="win-overlay hidden" id="win">
+    <div class="win-modal">
+      <div class="reveal-emoji" id="revealEmoji">💅</div>
+      <div class="win-title" id="winTitle">You <em>got it!</em></div>
+      <div class="reveal-word">P&nbsp;E&nbsp;D&nbsp;I</div>
+      <div class="win-msg" id="winMsg">Your gift is a pedicure.</div>
+      <div class="win-gift">Happy Birthday</div>
+      <button class="win-close" id="winClose">Close</button>
+    </div>
+  </div>
+
+  <footer>Made with <span class="heart">♥</span></footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const ANSWER = 'PEDI';
+const MAX_GUESSES = 6;
+const WORD_LEN = 4;
+
+const board = document.getElementById('board');
+const keyboard = document.getElementById('keyboard');
+const toastEl = document.getElementById('toast');
+const winEl = document.getElementById('win');
+
+let currentRow = 0;
+let currentGuess = '';
+let gameOver = false;
+const tiles = []; // tiles[row][col]
+const keyState = {}; // letter -> 'correct' | 'present' | 'absent'
+
+// Build board
+for (let r = 0; r < MAX_GUESSES; r++) {
+  const row = document.createElement('div');
+  row.className = 'row';
+  const rowTiles = [];
+  for (let c = 0; c < WORD_LEN; c++) {
+    const tile = document.createElement('div');
+    tile.className = 'tile';
+    row.appendChild(tile);
+    rowTiles.push(tile);
+  }
+  board.appendChild(row);
+  tiles.push(rowTiles);
+}
+
+// Build keyboard
+const kbLayout = [
+  ['Q','W','E','R','T','Y','U','I','O','P'],
+  ['A','S','D','F','G','H','J','K','L'],
+  ['ENTER','Z','X','C','V','B','N','M','BACK']
+];
+const keyEls = {};
+kbLayout.forEach(row => {
+  const rowEl = document.createElement('div');
+  rowEl.className = 'kb-row';
+  row.forEach(k => {
+    const btn = document.createElement('button');
+    btn.className = 'key' + (k.length > 1 ? ' wide' : '');
+    btn.textContent = k === 'BACK' ? '←' : k;
+    btn.dataset.key = k;
+    btn.addEventListener('click', () => handleKey(k));
+    rowEl.appendChild(btn);
+    keyEls[k] = btn;
+  });
+  keyboard.appendChild(rowEl);
+});
+
+function showToast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => toastEl.classList.remove('show'), 1500);
+}
+
+function shakeRow(r) {
+  tiles[r].forEach((t, i) => {
+    t.style.animationDelay = (i * 40) + 'ms';
+    t.classList.add('shake');
+    setTimeout(() => {
+      t.classList.remove('shake');
+      t.style.animationDelay = '';
+    }, 500);
+  });
+}
+
+function handleKey(k) {
+  if (gameOver) return;
+  if (k === 'ENTER') {
+    submitGuess();
+  } else if (k === 'BACK') {
+    if (currentGuess.length > 0) {
+      currentGuess = currentGuess.slice(0, -1);
+      const tile = tiles[currentRow][currentGuess.length];
+      tile.textContent = '';
+      tile.classList.remove('filled');
+    }
+  } else if (/^[A-Z]$/.test(k) && currentGuess.length < WORD_LEN) {
+    const tile = tiles[currentRow][currentGuess.length];
+    tile.textContent = k;
+    tile.classList.add('filled');
+    currentGuess += k;
+  }
+}
+
+function submitGuess() {
+  if (currentGuess.length !== WORD_LEN) {
+    showToast(`Need ${WORD_LEN} letters`);
+    shakeRow(currentRow);
+    return;
+  }
+
+  const guess = currentGuess;
+  const rowTiles = tiles[currentRow];
+
+  // Compute colors (handles duplicate letters correctly)
+  const result = new Array(WORD_LEN).fill('absent');
+  const answerArr = ANSWER.split('');
+  const guessArr = guess.split('');
+  const usedAnswer = new Array(WORD_LEN).fill(false);
+
+  // First pass: correct (green)
+  for (let i = 0; i < WORD_LEN; i++) {
+    if (guessArr[i] === answerArr[i]) {
+      result[i] = 'correct';
+      usedAnswer[i] = true;
+    }
+  }
+  // Second pass: present (yellow)
+  for (let i = 0; i < WORD_LEN; i++) {
+    if (result[i] === 'correct') continue;
+    for (let j = 0; j < WORD_LEN; j++) {
+      if (!usedAnswer[j] && guessArr[i] === answerArr[j]) {
+        result[i] = 'present';
+        usedAnswer[j] = true;
+        break;
+      }
+    }
+  }
+
+  // Reveal with flip animation, one by one
+  rowTiles.forEach((tile, i) => {
+    setTimeout(() => {
+      tile.classList.add('flip');
+      setTimeout(() => {
+        tile.classList.add(result[i]);
+        // Update keyboard color (only upgrade, never downgrade)
+        const letter = guessArr[i];
+        const cur = keyState[letter];
+        const rank = { absent: 0, present: 1, correct: 2 };
+        if (!cur || rank[result[i]] > rank[cur]) {
+          keyState[letter] = result[i];
+          keyEls[letter]?.classList.remove('correct','present','absent');
+          keyEls[letter]?.classList.add(result[i]);
+        }
+      }, 300);
+    }, i * 280);
+  });
+
+  const won = guess === ANSWER;
+  const totalDelay = WORD_LEN * 280 + 300;
+
+  setTimeout(() => {
+    if (won) {
+      // Bounce animation on correct row
+      rowTiles.forEach((tile, i) => {
+        setTimeout(() => {
+          tile.classList.remove('bounce');
+          void tile.offsetWidth;
+          tile.classList.add('bounce');
+        }, i * 80);
+      });
+      gameOver = true;
+      setTimeout(() => {
+        winEl.classList.remove('hidden');
+        launchConfetti();
+      }, 800);
+    } else {
+      currentRow++;
+      currentGuess = '';
+      if (currentRow >= MAX_GUESSES) {
+        gameOver = true;
+        setTimeout(() => {
+          // Still reveal the gift — this is a birthday present, not a failure
+          document.getElementById('winTitle').innerHTML = "Out of guesses — but here's your <em>gift</em>.";
+          document.getElementById('winMsg').textContent = "Your gift is a pedicure.";
+          winEl.classList.remove('hidden');
+          launchConfetti();
+        }, 400);
+      }
+    }
+  }, totalDelay);
+}
+
+function launchConfetti() {
+  const colors = ['#f4a4c0','#e8c547','#c94f3a','#7ba05b','#d4a574','#b8621b','#ffffff','#f8d7e0'];
+  for (let i = 0; i < 80; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + 'vw';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.animationDuration = (2 + Math.random() * 2) + 's';
+    piece.style.animationDelay = Math.random() * 0.8 + 's';
+    piece.style.width = (6 + Math.random() * 8) + 'px';
+    piece.style.height = piece.style.width;
+    if (Math.random() > 0.5) piece.style.borderRadius = '50%';
+    document.body.appendChild(piece);
+    setTimeout(() => piece.remove(), 5000);
+  }
+}
+
+document.getElementById('winClose').addEventListener('click', () => {
+  winEl.classList.add('hidden');
+});
+
+// Physical keyboard
+document.addEventListener('keydown', (e) => {
+  if (gameOver) return;
+  if (e.key === 'Enter') handleKey('ENTER');
+  else if (e.key === 'Backspace') handleKey('BACK');
+  else if (/^[a-zA-Z]$/.test(e.key)) handleKey(e.key.toUpperCase());
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ben's Strands</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4ede4;
+    --ink: #1a1612;
+    --accent: #c94f3a;
+    --found: #7ba05b;
+    --spangram: #e8c547;
+    --hint: #5b8fa0;
+    --tile: #ffffff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Fraunces', Georgia, serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(rgba(26,22,18,0.06) 1px, transparent 1px);
+    background-size: 16px 16px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .wrap {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 28px 16px 60px;
+    position: relative;
+    z-index: 1;
+  }
+  .corner {
+    position: absolute;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: rgba(26,22,18,0.4);
+    text-transform: uppercase;
+  }
+  .corner.tl { top: 12px; left: 16px; }
+  .corner.tr { top: 12px; right: 16px; }
+  header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-style: italic;
+    font-size: clamp(44px, 11vw, 68px);
+    line-height: 0.9;
+    letter-spacing: -0.03em;
+  }
+  h1 em {
+    font-weight: 700;
+    font-style: normal;
+    color: var(--accent);
+  }
+  .theme {
+    margin-top: 18px;
+    padding: 14px 18px;
+    background: var(--ink);
+    color: var(--bg);
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    text-align: center;
+    font-weight: 500;
+    box-shadow: 3px 3px 0 var(--accent);
+  }
+  .theme .label {
+    display: block;
+    font-size: 9px;
+    color: rgba(244,237,228,0.55);
+    margin-bottom: 4px;
+  }
+  .stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 18px 2px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(26,22,18,0.6);
+  }
+  .progress {
+    display: flex;
+    gap: 4px;
+  }
+  .bar {
+    width: 18px;
+    height: 4px;
+    background: rgba(26,22,18,0.15);
+    border-radius: 2px;
+    transition: background 0.35s ease;
+  }
+  .bar.filled { background: var(--found); }
+  .bar.spangram-filled { background: var(--spangram); }
+  .bar.hint-ready { background: var(--hint); animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .grid-wrap {
+    background: #fff;
+    border: 1.5px solid var(--ink);
+    border-radius: 6px;
+    padding: 10px;
+    box-shadow: 4px 4px 0 var(--ink);
+    position: relative;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    gap: 2px;
+    aspect-ratio: 6 / 8;
+    position: relative;
+  }
+  .cell {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: clamp(16px, 5vw, 22px);
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: background 0.2s, color 0.2s, transform 0.1s;
+    z-index: 2;
+    background: transparent;
+    color: var(--ink);
+  }
+  .cell.selected {
+    background: rgba(26,22,18,0.15);
+    transform: scale(1.05);
+  }
+  .cell.found {
+    background: var(--found);
+    color: #fff;
+  }
+  .cell.spangram {
+    background: var(--spangram);
+    color: var(--ink);
+  }
+  .cell.hint-glow {
+    animation: hintGlow 1.2s ease-in-out infinite;
+  }
+  @keyframes hintGlow {
+    0%,100% { box-shadow: 0 0 0 0 rgba(91,143,160,0.6); }
+    50% { box-shadow: 0 0 0 6px rgba(91,143,160,0); }
+  }
+
+  /* SVG overlay for connecting lines */
+  .lines {
+    position: absolute;
+    inset: 10px;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .current-word {
+    text-align: center;
+    margin-top: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    min-height: 22px;
+    color: var(--ink);
+  }
+  .current-word.invalid { color: var(--accent); }
+  .current-word.valid { color: var(--found); }
+
+  .controls {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  button.btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 11px 16px;
+    background: var(--bg);
+    color: var(--ink);
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.15s ease;
+  }
+  button.btn:hover:not(:disabled) {
+    background: var(--ink);
+    color: var(--bg);
+  }
+  button.btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  button.btn.hint {
+    background: var(--hint);
+    color: #fff;
+    border-color: var(--hint);
+  }
+  button.btn.hint:hover:not(:disabled) {
+    background: var(--ink);
+    border-color: var(--ink);
+  }
+
+  .found-list {
+    margin-top: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+  }
+  .found-chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 6px 10px;
+    background: var(--found);
+    color: #fff;
+    border-radius: 999px;
+    font-weight: 500;
+    animation: chipIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .found-chip.spangram {
+    background: var(--spangram);
+    color: var(--ink);
+  }
+  @keyframes chipIn {
+    0% { opacity: 0; transform: scale(0.5); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  .toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-80px);
+    background: var(--ink);
+    color: var(--bg);
+    padding: 10px 20px;
+    border-radius: 999px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    z-index: 100;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  .win-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(26,22,18,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    animation: fadeIn 0.4s ease;
+    padding: 20px;
+  }
+  .win-overlay.hidden { display: none; }
+  @keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  .win-modal {
+    background: var(--bg);
+    border: 1.5px solid var(--ink);
+    border-radius: 8px;
+    padding: 40px 32px 32px;
+    text-align: center;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 6px 6px 0 var(--accent);
+    position: relative;
+    animation: popIn 0.6s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes popIn {
+    0% { opacity: 0; transform: scale(0.7) translateY(20px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .win-title {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 300;
+    font-size: clamp(32px, 8vw, 48px);
+    line-height: 1;
+    margin-bottom: 14px;
+  }
+  .win-title em { font-style: normal; font-weight: 700; color: var(--accent); }
+  .win-msg {
+    font-family: 'Fraunces', serif;
+    font-size: 17px;
+    color: rgba(26,22,18,0.8);
+    font-style: italic;
+    margin-bottom: 8px;
+  }
+  .win-punchline {
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    color: rgba(26,22,18,0.55);
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px dashed rgba(26,22,18,0.2);
+  }
+  .win-punchline strong {
+    font-weight: 700;
+    color: var(--accent);
+    font-style: italic;
+  }
+  .win-close {
+    margin-top: 22px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 11px 22px;
+    background: var(--ink);
+    color: var(--bg);
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.15s ease;
+  }
+  .win-close:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .confetti-piece {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    pointer-events: none;
+    z-index: 150;
+    animation: confettiFall linear forwards;
+  }
+  @keyframes confettiFall {
+    0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0.3; }
+  }
+
+  footer {
+    margin-top: 30px;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: rgba(26,22,18,0.4);
+  }
+  footer .heart { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="corner tl">№ 002</div>
+  <div class="corner tr">Edition of 1</div>
+
+  <header>
+    <h1>Ben's <em>Strands</em></h1>
+    <div class="theme">
+      <span class="label">Today's theme</span>
+      Year in review
+    </div>
+  </header>
+
+  <div class="stats">
+    <div id="foundCount">0 / 7 found</div>
+    <div class="progress" id="progress"></div>
+  </div>
+
+  <div class="grid-wrap">
+    <svg class="lines" id="lines" preserveAspectRatio="none"></svg>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div class="current-word" id="currentWord"></div>
+
+  <div class="controls">
+    <button class="btn" id="clearBtn">Clear</button>
+    <button class="btn hint" id="hintBtn" disabled>Hint</button>
+  </div>
+
+  <div class="found-list" id="foundList"></div>
+
+  <div class="win-overlay hidden" id="win">
+    <div class="win-modal">
+      <div class="win-title">Ben's <em>Strands</em>.</div>
+      <div class="win-msg">Get it? ;)</div>
+      <button class="win-close" id="winClose">Close</button>
+    </div>
+  </div>
+
+  <footer>Made with <span class="heart">♥</span></footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// Grid from solved plan - HANDLEBAR as arched mustache at TOP, HAIRSTYLE cascading down right edge
+const GRID = [
+  ['N','D','L','E','B','H'],
+  ['A','B','L','O','A','A'],
+  ['H','E','D','N','R','I'],
+  ['C','U','R','L','Y','R'],
+  ['S','H','A','V','E','S'],
+  ['B','R','U','N','D','T'],
+  ['E','T','T','E','B','Y'],
+  ['D','R','A','E','E','L'],
+];
+
+// Word paths with thematic colors per word
+const WORDS = {
+  HAIRSTYLE: {
+    path: [[0,5],[1,5],[2,5],[3,5],[4,5],[5,5],[6,5],[7,5],[7,4]],
+    isSpangram: true,
+    color: '#d4a574',      // warm honey — the spangram, flowing like long hair
+    textColor: '#1a1612'
+  },
+  HANDLEBAR: {
+    path: [[2,0],[1,0],[0,0],[0,1],[0,2],[0,3],[0,4],[1,4],[2,4]],
+    color: '#3a2817',      // very dark mustache brown
+    textColor: '#ffffff'
+  },
+  BLONDE: {
+    path: [[1,1],[1,2],[1,3],[2,3],[2,2],[2,1]],
+    color: '#e8c547',      // blonde gold
+    textColor: '#1a1612'
+  },
+  CURLY: {
+    path: [[3,0],[3,1],[3,2],[3,3],[3,4]],
+    color: '#b8621b',      // copper/auburn curls
+    textColor: '#ffffff'
+  },
+  SHAVED: {
+    path: [[4,0],[4,1],[4,2],[4,3],[4,4],[5,4]],
+    color: '#9ca3a8',      // clean silver/grey
+    textColor: '#ffffff'
+  },
+  BRUNETTE: {
+    path: [[5,0],[5,1],[5,2],[5,3],[6,3],[6,2],[6,1],[6,0]],
+    color: '#6b4423',      // rich brunette brown
+    textColor: '#ffffff'
+  },
+  BEARD: {
+    path: [[6,4],[7,3],[7,2],[7,1],[7,0]],
+    color: '#2a1c10',      // deep beard brown
+    textColor: '#ffffff'
+  }
+};
+
+const ROWS = 8, COLS = 6;
+const TOTAL_WORDS = Object.keys(WORDS).length;
+
+// Word-to-key lookup by sorted path signature
+const pathKey = (path) => path.map(([r,c])=>`${r},${c}`).join('|');
+const WORD_BY_PATH = {};
+for (const [w, data] of Object.entries(WORDS)) {
+  WORD_BY_PATH[pathKey(data.path)] = w;
+}
+const WORD_STRINGS = Object.keys(WORDS);
+
+// State
+let currentPath = [];
+let found = new Set();
+let nonThemeCount = 0; // counts valid-looking submissions that aren't theme words; every 3 enables a hint
+let hintWord = null;   // which word is being hinted
+let hintStage = 0;     // 0 = none, 1 = cells glowing, 2 = first letter glowing
+
+// Build grid
+const gridEl = document.getElementById('grid');
+const linesEl = document.getElementById('lines');
+const cells = [];
+for (let r = 0; r < ROWS; r++) {
+  cells.push([]);
+  for (let c = 0; c < COLS; c++) {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.textContent = GRID[r][c];
+    cell.dataset.row = r;
+    cell.dataset.col = c;
+    gridEl.appendChild(cell);
+    cells[r].push(cell);
+  }
+}
+
+// Build progress bars
+const progressEl = document.getElementById('progress');
+function renderProgress() {
+  progressEl.innerHTML = '';
+  for (let i = 0; i < TOTAL_WORDS; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    if (i < found.size) {
+      const foundArr = [...found];
+      const w = foundArr[i];
+      if (WORDS[w]?.color) {
+        bar.style.background = WORDS[w].color;
+      } else {
+        bar.classList.add(WORDS[w]?.isSpangram ? 'spangram-filled' : 'filled');
+      }
+    }
+    progressEl.appendChild(bar);
+  }
+  // Hint readiness indicator: one extra slot
+  const hintSlots = Math.floor(nonThemeCount / 3);
+  if (hintSlots > 0 && !hintWord) {
+    const h = document.createElement('div');
+    h.className = 'bar hint-ready';
+    progressEl.appendChild(h);
+  }
+}
+renderProgress();
+
+// Input handling — supports click and drag
+let isPointerDown = false;
+
+function cellAt(r, c) {
+  if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return null;
+  return cells[r][c];
+}
+
+function isAdjacent(a, b) {
+  return Math.max(Math.abs(a[0]-b[0]), Math.abs(a[1]-b[1])) === 1;
+}
+
+function isCellFinalized(r, c) {
+  for (const w of found) {
+    if (WORDS[w].path.some(([pr,pc]) => pr===r && pc===c)) return true;
+  }
+  return false;
+}
+
+function addToPath(r, c) {
+  if (isCellFinalized(r,c)) return;
+  const existingIdx = currentPath.findIndex(([pr,pc]) => pr===r && pc===c);
+  if (existingIdx !== -1) {
+    // If tapping the last cell, submit. If tapping an earlier cell, truncate back to it.
+    if (existingIdx === currentPath.length - 1) {
+      submit();
+      return;
+    } else {
+      currentPath = currentPath.slice(0, existingIdx + 1);
+      renderSelection();
+      return;
+    }
+  }
+  if (currentPath.length > 0) {
+    const last = currentPath[currentPath.length - 1];
+    if (!isAdjacent(last, [r,c])) {
+      // Not adjacent — start a new path
+      currentPath = [[r,c]];
+      renderSelection();
+      return;
+    }
+  }
+  currentPath.push([r,c]);
+  renderSelection();
+}
+
+function renderSelection() {
+  // Clear transient classes
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      cells[r][c].classList.remove('selected');
+    }
+  }
+  currentPath.forEach(([r,c]) => cells[r][c].classList.add('selected'));
+  // Current word display
+  const word = currentPath.map(([r,c]) => GRID[r][c]).join('');
+  document.getElementById('currentWord').textContent = word;
+  document.getElementById('currentWord').className = 'current-word';
+  drawLines();
+}
+
+function clearSelection() {
+  currentPath = [];
+  renderSelection();
+}
+
+function showToast(msg, ms=1400) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => t.classList.remove('show'), ms);
+}
+
+function submit() {
+  if (currentPath.length < 3) { clearSelection(); return; }
+  const key = pathKey(currentPath);
+  const word = currentPath.map(([r,c]) => GRID[r][c]).join('');
+
+  // Exact theme word match (correct path)
+  if (WORD_BY_PATH[key] && !found.has(WORD_BY_PATH[key])) {
+    foundWord(WORD_BY_PATH[key]);
+    return;
+  }
+
+  // Check if path spells a theme word but wrong path (shouldn't happen with unique paths, but guard)
+  if (WORD_STRINGS.includes(word) && !found.has(word)) {
+    foundWord(word);
+    return;
+  }
+
+  // Valid-but-not-theme: Strands rewards these with hint progress.
+  // Simple check: at least 4 letters and forms a plausible English word pattern.
+  // Without a dictionary, we accept any 4+ letter submission as "not a theme word" feedback.
+  if (currentPath.length >= 4) {
+    nonThemeCount++;
+    showToast('Not a theme word');
+    renderProgress();
+  } else {
+    showToast('Too short');
+  }
+  clearSelection();
+}
+
+function foundWord(word) {
+  found.add(word);
+  const isSpan = WORDS[word].isSpangram;
+  const wordColor = WORDS[word].color;
+  const wordTextColor = WORDS[word].textColor || '#ffffff';
+  WORDS[word].path.forEach(([r,c]) => {
+    cells[r][c].classList.remove('selected','hint-glow');
+    cells[r][c].classList.add(isSpan ? 'spangram' : 'found');
+    cells[r][c].style.background = wordColor;
+    cells[r][c].style.color = wordTextColor;
+  });
+  // Bounce effect
+  WORDS[word].path.forEach(([r,c], i) => {
+    const el = cells[r][c];
+    el.style.animation = 'none';
+    void el.offsetWidth;
+    el.style.animation = `bounce 0.4s ${i*50}ms`;
+  });
+
+  if (hintWord === word) { hintWord = null; hintStage = 0; }
+
+  // Update UI
+  document.getElementById('foundCount').textContent = `${found.size} / ${TOTAL_WORDS} found`;
+  const chip = document.createElement('div');
+  chip.className = 'found-chip' + (isSpan ? ' spangram' : '');
+  chip.textContent = word + (isSpan ? ' ⭐' : '');
+  chip.style.background = wordColor;
+  chip.style.color = wordTextColor;
+  document.getElementById('foundList').appendChild(chip);
+  showToast(isSpan ? 'Spangram!' : 'Theme word!', 1200);
+  renderProgress();
+  clearSelection();
+  drawLines();
+
+  if (found.size === TOTAL_WORDS) {
+    setTimeout(() => {
+      document.getElementById('win').classList.remove('hidden');
+      launchConfetti();
+    }, 500);
+  }
+}
+
+function launchConfetti() {
+  const colors = ['#d4a574','#e8c547','#6b4423','#4a2c1a','#b8621b','#9ca3a8','#3a2817','#c94f3a'];
+  for (let i = 0; i < 80; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + 'vw';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.animationDuration = (2 + Math.random() * 2) + 's';
+    piece.style.animationDelay = Math.random() * 0.8 + 's';
+    piece.style.width = (6 + Math.random() * 8) + 'px';
+    piece.style.height = piece.style.width;
+    if (Math.random() > 0.5) piece.style.borderRadius = '50%';
+    document.body.appendChild(piece);
+    setTimeout(() => piece.remove(), 5000);
+  }
+}
+
+document.getElementById('winClose').addEventListener('click', () => {
+  document.getElementById('win').classList.add('hidden');
+});
+
+// Draw persistent lines for found words and current selection
+function drawLines() {
+  const rect = gridEl.getBoundingClientRect();
+  const wrapRect = gridEl.parentElement.getBoundingClientRect();
+  linesEl.setAttribute('viewBox', `0 0 ${rect.width} ${rect.height}`);
+  linesEl.setAttribute('width', rect.width);
+  linesEl.setAttribute('height', rect.height);
+  linesEl.innerHTML = '';
+
+  const cellW = rect.width / COLS;
+  const cellH = rect.height / ROWS;
+  const cx = (c) => c * cellW + cellW/2;
+  const cy = (r) => r * cellH + cellH/2;
+
+  const drawPath = (path, color, width=8) => {
+    if (path.length < 2) return;
+    const d = path.map((p,i) => (i===0?'M':'L') + cx(p[1]) + ',' + cy(p[0])).join(' ');
+    const line = document.createElementNS('http://www.w3.org/2000/svg','path');
+    line.setAttribute('d', d);
+    line.setAttribute('stroke', color);
+    line.setAttribute('stroke-width', width);
+    line.setAttribute('stroke-linecap', 'round');
+    line.setAttribute('stroke-linejoin', 'round');
+    line.setAttribute('fill', 'none');
+    line.setAttribute('opacity', '0.5');
+    linesEl.appendChild(line);
+  };
+
+  for (const w of found) {
+    drawPath(WORDS[w].path, WORDS[w].color, 10);
+  }
+  if (currentPath.length >= 2) {
+    drawPath(currentPath, 'rgba(26,22,18,0.5)', 6);
+  }
+}
+
+// Redraw lines on resize
+window.addEventListener('resize', drawLines);
+
+// Pointer events
+gridEl.addEventListener('pointerdown', (e) => {
+  const cell = e.target.closest('.cell');
+  if (!cell) return;
+  e.preventDefault();
+  isPointerDown = true;
+  const r = +cell.dataset.row, c = +cell.dataset.col;
+  if (currentPath.length > 0 && !isCellFinalized(r,c)) {
+    // Check if tapping a cell to extend current path
+    const last = currentPath[currentPath.length - 1];
+    if (last[0]===r && last[1]===c) {
+      submit();
+      return;
+    }
+  }
+  addToPath(r, c);
+});
+
+gridEl.addEventListener('pointermove', (e) => {
+  if (!isPointerDown) return;
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  const cell = el?.closest?.('.cell');
+  if (!cell || !gridEl.contains(cell)) return;
+  const r = +cell.dataset.row, c = +cell.dataset.col;
+  addToPath(r, c);
+});
+
+window.addEventListener('pointerup', () => {
+  if (!isPointerDown) return;
+  isPointerDown = false;
+  // On pointer up after drag of 3+ cells, auto-submit
+  if (currentPath.length >= 3) {
+    // Only auto-submit if the path exactly matches a theme word path
+    if (WORD_BY_PATH[pathKey(currentPath)] && !found.has(WORD_BY_PATH[pathKey(currentPath)])) {
+      submit();
+    }
+    // Otherwise leave it for the user to tap the last letter again to submit
+  }
+});
+
+// Clear button
+document.getElementById('clearBtn').addEventListener('click', clearSelection);
+
+// Hint button
+const hintBtn = document.getElementById('hintBtn');
+function updateHintBtn() {
+  const available = Math.floor(nonThemeCount / 3) > 0;
+  hintBtn.disabled = !available && !hintWord;
+}
+setInterval(updateHintBtn, 300);
+
+hintBtn.addEventListener('click', () => {
+  if (hintWord) {
+    // Stage 2: reveal path direction by highlighting the first letter strongly
+    hintStage = 2;
+    const firstCell = WORDS[hintWord].path[0];
+    // Flash the first letter
+    cells[firstCell[0]][firstCell[1]].style.background = 'var(--hint)';
+    cells[firstCell[0]][firstCell[1]].style.color = '#fff';
+    setTimeout(() => {
+      if (!found.has(hintWord)) {
+        cells[firstCell[0]][firstCell[1]].style.background = '';
+        cells[firstCell[0]][firstCell[1]].style.color = '';
+      }
+    }, 2000);
+    nonThemeCount -= 3;
+    renderProgress();
+    return;
+  }
+  // Stage 1: pick a random unfound word and glow its cells
+  const unfound = WORD_STRINGS.filter(w => !found.has(w));
+  if (unfound.length === 0) return;
+  hintWord = unfound[Math.floor(Math.random() * unfound.length)];
+  hintStage = 1;
+  WORDS[hintWord].path.forEach(([r,c]) => cells[r][c].classList.add('hint-glow'));
+  nonThemeCount -= 3;
+  renderProgress();
+  // Glow for 4 seconds
+  setTimeout(() => {
+    WORDS[hintWord]?.path.forEach(([r,c]) => {
+      if (!found.has(hintWord)) cells[r][c].classList.remove('hint-glow');
+    });
+  }, 4000);
+});
+
+// Initial render
+setTimeout(drawLines, 50);
+</script>
+</body>
+</html>
